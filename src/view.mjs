@@ -114,7 +114,7 @@ function actionPlan(run, a, gold, freeShop) {
   // Every step carries "say": the full instruction in plain words, so nothing has to be worked out from numbers.
   const add = (step) => steps.push(step);
   if (/EndRun/.test(phase ?? '')) return [{ do: 'bekle', what: 'Tur bitti', say: 'Tur bitti. Yeni tur başlattığında plan yenilenir.', why: '' }];
-  if (/Combat|Replay/.test(phase ?? '')) return [{ do: 'bekle', what: 'Savaş sürüyor', say: 'Savaş sürüyor, yapılacak bir hamle yok. Bitince sıradaki adımlar burada görünür.', why: '' }];
+  if (/Combat|Replay/.test(phase ?? '')) return [{ do: 'bekle', what: 'Savaş sürüyor', say: run.current?.pvp ? 'Oyuncu savaşı sürüyor. Rakibin tahtası bilinmediği için bu savaşa tahmin vermiyorum.' : 'Savaş sürüyor, yapılacak bir hamle yok. Bitince sıradaki adımlar burada görünür.', why: '' }];
   if (phase === 'ChoiceState' || phase === 'LevelUpState') {
     const pick = a.options.find((o) => o.verdict === 'seç');
     const sk = a.skillOffers[0];
@@ -331,7 +331,8 @@ export function buildView(run, screen, data, opts = {}) {
       day: run.day,
       hour: run.hour,
       phase: run.phase,
-      encounter: cur ? { name: cur.name, type: cur.type, shop } : null,
+      encounter: cur && !run.current?.pvp ? { name: cur.name, type: cur.type, shop } : run.current?.pvp ? { name: 'Oyuncu savaşı', type: 'PvP', shop: null } : null,
+      pvp: Boolean(run.current?.pvp),
       fights: run.fights,
       lastEvent: run.lastEvent,
     },
@@ -376,7 +377,7 @@ export function buildView(run, screen, data, opts = {}) {
       opinions: opinions(run, boardNow, stashNow, eng, shop, data),
       lookout: lookout(owned, data, run.hero).map((l) => ({ ...l, art: art(l.templateId), onOffer: itemOffers.some((o) => o.templateId === l.templateId) })),
       choices: choiceRows,
-      monsters: (monsterSeen.length ? monsterSeen.sort((a, b) => a.cx - b.cx) : cur?.type === 'CombatEncounter' && inFight ? [{ card: cur, variants: 1 }] : [])
+      monsters: (monsterSeen.length ? monsterSeen.sort((a, b) => a.cx - b.cx) : cur?.type === 'CombatEncounter' && inFight && !run.current?.pvp ? [{ card: cur, variants: 1 }] : [])
         .map((m) => { const dm = describeMonster(m.card, owned, data, opts.health ?? null, fightOf); if (dm?.fight) dm.uncertain = dm.fight.coverage < 60; return { ...dm, variants: m.variants }; }).filter((m) => m.name),
       offers,
       reroll,

@@ -40,6 +40,7 @@ let lastGold = null; // last values read from the screen; kept while a frame fai
 let lastIncome = null;
 let lastHealth = null;
 let lastLevel = null;
+let pendingFight = null;
 // Owned skills as read from the icons beside the hero (the log only gives a skill's instance id, not which skill).
 // A skill counts once it was seen in three reads; skills are kept for the run.
 const skillSeen = new Map();
@@ -94,6 +95,22 @@ function pollLog() {
         status.log.events += 1;
         tracker.apply(e);
         scene.onEvent(e);
+        // Calibration record: what the engine expected of each monster fight, next to how it really went
+        // (a win is followed by the loot screen; the real fight length is in the log). One line per fight.
+        if (live) {
+          try {
+            if (e.type === 'state' && e.to === 'CombatState') pendingFight = { at: Date.now(), wantView: true };
+            else if (pendingFight?.wantView && e.type === 'purchase' && /^com_/.test(e.instanceId ?? '')) {
+              const v = state();
+              const mo = v.advice.monsters[0];
+              pendingFight = { at: Date.now(), day: v.run.day, monster: mo?.name ?? data.cards[e.templateId]?.name, health: v.health, board: v.board.items.filter((i) => i.where === 'board').map((i) => `${i.name}:${i.tier}`), skills: v.skills, estimate: mo?.fight ?? null };
+            } else if (pendingFight && e.type === 'combatDone') pendingFight.realSeconds = Math.round((e.durationMs ?? 0) / 100) / 10;
+            else if (pendingFight?.monster && e.type === 'state' && e.from === 'ReplayState') {
+              appendFileSync(join(ROOT, 'data', 'fights.jsonl'), JSON.stringify({ ...pendingFight, won: e.to === 'LootState' }) + '\n');
+              pendingFight = null;
+            }
+          } catch { pendingFight = null; }
+        }
         // Gold moves the moment the log says so; the screen read confirms or corrects it a moment later.
         if (live && lastGold != null) {
           if (e.type === 'sold' && Number.isFinite(e.gold)) lastGold += e.gold;

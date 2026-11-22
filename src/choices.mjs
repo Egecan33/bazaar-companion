@@ -198,8 +198,8 @@ export function rateOptions(options, run, owned, data, opts = {}) {
       const m = describeMonster(c, owned, data, opts.health ?? null, opts.fightOf ?? null);
       if (m?.fight) m.uncertain = m.fight.coverage < 60;
       if (!m) return { kind: 'canavar', name: c.name, score: null, reason: 'veride canavar bilgisi yok', verdict: '' };
-      return { kind: 'canavar', name: c.name, score: round(m.gold * ppg), fight: m.fight, uncertain: m.uncertain, risky: !m.uncertain && (m.fight ? m.fight.chance < 45 : m.ratio != null && m.ratio >= 1.2),
-        reason: `${m.uncertain ? `${m.note} · ` : m.fight ? `kazanma tahmini %${m.fight.chance}, güven ${m.fight.confidence} · ` : ''}${m.health} can · ${m.uncertain ? '' : `eşya gücü ${m.theirs}, seninki ${m.mine} · `}ödül ${m.gold} altın, ${m.xp} XP`, verdict: '' };
+      return { kind: 'canavar', name: c.name, score: round(m.gold * ppg), fight: m.fight, uncertain: m.uncertain, risky: !m.uncertain && (m.fight ? m.fight.band !== 'avantajlı' : m.ratio != null && m.ratio >= 1.2),
+        reason: `${m.uncertain ? `${m.note} · ` : m.fight ? `savaş tahmini: ${m.fight.band} (%${m.fight.chance}), güven ${m.fight.confidence} · ` : ''}${m.health} can · ${m.uncertain ? '' : `eşya gücü ${m.theirs}, seninki ${m.mine} · `}ödül ${m.gold} altın, ${m.xp} XP`, verdict: '' };
     }
     const names = [...new Set(cands.map((x) => x.name))];
     if (names.length > 1) return { kind: 'olay', name: names.length > 3 ? 'Sandık / olay' : names.join(' / '), score: null, reason: `${names.length} olası karşılaşma aynı görseli kullanıyor: ${names.slice(0, 4).join(', ')}${names.length > 4 ? '…' : ''}`, verdict: '' };

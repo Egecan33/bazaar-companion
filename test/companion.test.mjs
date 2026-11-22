@@ -389,3 +389,28 @@ test('free offers are never skipped; a single free pick goes to the best one', (
   assert.deepEqual(single.advice.offers.map((o) => o.verdict).sort(), ['al', 'geç']);
   assert.equal(single.advice.offers.find((o) => o.verdict === 'al').name, 'Narwhal');
 });
+
+test('fight estimate: a fight decided by a thin margin is not called certain (real loss: Dooley vs Boarrior, day 2)', async () => {
+  const { engineFight } = await import('../src/advisor.mjs');
+  const item = (n) => Object.values(data.cards).find((c) => c.name === n && c.type === 'Item');
+  // The board on screen 12 s before a fight the player lost; the game's fight lasted 20.1 s.
+  const board = ['Welding Helmet', 'Dinosawer', 'Clawrence', 'GRN-W4SP'].map((n, i) => ({ instanceId: 'd' + i, templateId: item(n).id, tier: 'Bronze', where: 'board' }));
+  const boarrior = Object.values(data.cards).find((c) => c.name === 'Boarrior' && c.type === 'CombatEncounter');
+  const f = engineFight(boarrior, board, [], 400, data);
+  assert.ok(f.chance < 90, `a close fight was reported as ${f.chance}%`);
+  assert.equal(f.band, 'yakın');
+  assert.ok(Math.abs(f.seconds - 20) <= 4, `the engine's fight length (${f.seconds} s) should be near the real 20 s`);
+});
+
+test('a player fight is never estimated as the placeholder monster the log names', () => {
+  const viper = Object.values(data.cards).find((c) => c.name === 'Viper' && c.type === 'CombatEncounter');
+  const item = (n) => Object.values(data.cards).find((c) => c.name === n && c.type === 'Item');
+  const t = createTracker(data);
+  for (const l of ['[00:00:00.000] [GameInstance] Starting new run...', '[00:00:01.000] [AppState] State changed from [ChoiceState] to [PVPCombatState]',
+    `[00:00:02.000] [BoardManager] Card Purchased: InstanceId: pvp_abc - TemplateId${viper.id} - Target:OpponentSocket_5 - SectionOpponent`]) { const e = parseLine(l); if (e) t.apply(e); }
+  t.run.items = { x: { templateId: item('Piranha').id, tier: 'Bronze', where: 'board' } };
+  const v = buildView(t.run, null, data, { now: Date.now(), health: 500 });
+  assert.equal(t.run.current.pvp, true);
+  assert.deepEqual(v.advice.monsters, [], 'no monster estimate in a player fight');
+  assert.equal(v.run.pvp, true);
+});

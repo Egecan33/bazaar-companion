@@ -122,6 +122,9 @@ export function runFight(a, b, data, opts = {}) {
   const { side: A, fill } = buildSide(a, data, 'a', rules);
   const { side: B } = buildSide(b, data, 'b', rules);
   const sides = [A, B];
+  // Model uncertainty: with opts.noise each item's output is scaled by its own random factor for this run, so a
+  // fight the model sees as close comes out as close instead of as a certain win.
+  if (opts.noise) for (const s of sides) for (const it of s.items) it.k = Math.exp(Math.sqrt(-2 * Math.log(1 - rand())) * Math.cos(2 * Math.PI * rand()) * opts.noise);
   const other = (s) => (s === A ? B : A);
   const sideOf = (it) => (it.side === 'a' ? A : B);
   const dummy = opts.dummy ?? null;
@@ -349,7 +352,7 @@ export function runFight(a, b, data, opts = {}) {
     if (attr) {
       const base = fx.val ? amount(fx.val, self, me, foe, ctx) : self.attrs[attr];
       if (!(base > 0)) return;
-      const v = base * (self.critNow ?? 1);
+      const v = base * (self.critNow ?? 1) * (self.k ?? 1);
       const mode = fx.tgt?.mode;
       const offensive = fx.act === 'PlayerDamage' || fx.act === 'PlayerBurnApply' || fx.act === 'PlayerPoisonApply';
       const whos = mode === 'Both' ? [me, foe] : [offensive ? (mode === 'Self' || fx.tgt?.type === 'PlayerAbsolute' ? me : foe) : (mode === 'Opponent' ? foe : me)];
@@ -489,6 +492,7 @@ export function runFight(a, b, data, opts = {}) {
   const sum = (side) => side.items.reduce((o, it) => { for (const k of Object.keys(o)) o[k] += it.out[k]; return o; }, { damage: 0, shield: 0, heal: 0, burn: 0, poison: 0, regen: 0 });
   return {
     seconds: secs, win: end != null ? B.hp <= 0 && A.hp > B.hp : A.hp / A.max >= B.hp / B.max,
+    margin: Math.max(-1, Math.min(1, A.hp / A.max)) - Math.max(-1, Math.min(1, B.hp / B.max)), // share of health left, mine minus theirs
     a: { hp: A.hp, taken: A.taken, out: sum(A), firstUse: Math.min(...A.items.map((it) => it.firstAt ?? Infinity)) / 1000, items: A.items.map((it) => ({ name: it.name, uses: it.uses, out: it.out })) },
     b: { hp: B.hp, taken: B.taken, out: sum(B), uses: B.items.reduce((n, it) => n + it.uses, 0), items: B.items.map((it) => ({ name: it.name, uses: it.uses, out: it.out })) },
   };

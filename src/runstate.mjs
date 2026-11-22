@@ -89,7 +89,8 @@ export function createTracker(data) {
           const top = type !== 'EncounterStep';
           if (top) run.hour += 1;
           run.encounters.push({ templateId: e.templateId, type, day: run.day, hour: run.hour });
-          run.current = { templateId: e.templateId, type };
+          // In a player fight the log names a placeholder card (always the same monster), not the real opponent.
+          run.current = { templateId: e.templateId, type, instanceId: e.instanceId, pvp: /^pvp_/.test(e.instanceId ?? '') };
           if (!run.hero && /Start Run/i.test(card?.internalName ?? '') && card.heroes?.length === 1) {
             run.hero = card.heroes[0];
           }

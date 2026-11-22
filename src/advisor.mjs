@@ -146,17 +146,26 @@ export function engineAdvice(board, stash, skills, offers, run, data, skillOffer
 }
 
 /** Chance against a monster: share of engine fights won over many seeds, with how much of both sides is handled. */
-export function engineFight(monsterCard, board, skills, health, data, runs = 40) {
+// How far the engine's item outputs are allowed to be off, per item and per run (log-normal sigma). The engine
+// has been compared with one real fight so far (it got the length right and the winner wrong, by 87 health of 400),
+// so this is an assumption, not a calibration. data/fights.jsonl collects the cases to calibrate it with.
+export const MODEL_NOISE = 0.15;
+
+export function engineFight(monsterCard, board, skills, health, data, runs = 60) {
   const m = data.monsters?.[monsterCard?.combat?.monsterId];
   if (!m || !health || !board.length) return null;
   return memo(`fight|${monsterCard.id}|${health}|${skills.join(',')}|${sig(board)}`, () => {
     const a = { items: board.map(entry), skills, health };
     const b = { items: (m.items ?? []).map(entry), skills: m.skills ?? [], health: m.health, player: m.player, level: m.level };
-    let wins = 0, secs = 0;
-    for (let s = 1; s <= runs; s++) { const r = runFight(a, b, data, { seed: s }); wins += r.win ? 1 : 0; secs += r.seconds; }
+    let wins = 0, secs = 0, margin = 0;
+    for (let s = 1; s <= runs; s++) { const r = runFight(a, b, data, { seed: s, noise: MODEL_NOISE }); wins += r.win ? 1 : 0; secs += r.seconds; margin += r.margin; }
     const ca = coverageOf(a.items, skills, data), cb = coverageOf(b.items, b.skills, data);
     const share = Math.min(ca.share, cb.share);
-    return { chance: Math.round((wins / runs) * 100), seconds: Math.round(secs / runs), coverage: Math.round(share * 100),
-      confidence: share >= 0.85 ? 'yüksek' : share >= 0.6 ? 'orta' : 'düşük', ignored: [...new Set([...ca.missed, ...cb.missed])].slice(0, 6) };
+    const chance = Math.round((wins / runs) * 100);
+    return { chance, seconds: Math.round(secs / runs), coverage: Math.round(share * 100), margin: Math.round((margin / runs) * 100),
+      // Never "you will win": three bands, and the middle one is wide on purpose. A fight that ends with less
+      // than a quarter of a health bar between the two sides is close whatever the win share says.
+      band: chance >= 75 && margin / runs >= 0.25 ? 'avantajlı' : chance <= 25 && margin / runs <= -0.25 ? 'zor' : 'yakın',
+      confidence: share >= 0.85 ? 'orta (kalibre edilmedi)' : 'düşük', ignored: [...new Set([...ca.missed, ...cb.missed])].slice(0, 6) };
   });
 }
