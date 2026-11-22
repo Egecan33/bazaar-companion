@@ -108,6 +108,10 @@
   .step { display: grid; grid-template-columns: 20px 1fr; gap: 0 8px; padding: 4px 0; border-top: 1px solid rgba(255,255,255,.08); }
   .pl h3 + .step { border-top: 0; }
   .step > b { font: 700 15px/1.2 "Avenir Next Condensed", system-ui; color: var(--saffron); text-align: right; }
+  .tip { padding: 4px 0; border-top: 1px solid rgba(255,255,255,.08); }
+  .pl h3 + .tip { border-top: 0; }
+  .tip .what2 { font: 600 15px/1.25 "Avenir Next Condensed", system-ui; }
+  .tip .g2 { float: right; font: 600 14px/1.2 "Avenir Next Condensed", system-ui; color: var(--teal); }
   .step .say { font: 500 13.5px/1.35 "Avenir Next", system-ui; color: var(--ink); margin: 2px 0 1px; }
   .step .what2 { font: 600 15px/1.2 "Avenir Next Condensed", system-ui; }
   .step .g2 { float: right; font: 600 14px/1.2 "Avenir Next Condensed", system-ui; color: var(--teal); }
@@ -206,7 +210,9 @@ function renderOverlay(s) {
   if (pw) h += `<div class="pl" style="padding:7px 11px"><h3 style="margin-bottom:5px"><span>Güne göre güç</span><em>${pw.level}. seviye ortanca canavar = %100</em></h3><div class="gauge"><i style="width:${Math.min(100, pw.percent / 2)}%;background:${pw.percent >= 110 ? 'var(--teal)' : pw.percent >= 80 ? 'var(--saffron)' : 'var(--madder)'}"></i><span class="mark"></span><b>%${pw.percent}</b></div></div>`;
   const DO = { al: 'Al', git: 'Git', 'seç': 'Seç', sat: 'Sat', koy: 'Koy', 'değiştir': 'Değiştir', diz: 'Diz', yenile: 'Yenile', 'çık': 'Çık', bekle: 'Bekle', atla: 'Atla', 'hazırla': 'Hazırla', 'karar ver': 'Karar ver', 'göster': 'Göster' };
   const plan = s.plan ?? [];
-  if (plan.length) h += `<div class="pl now" style="display:block"><h3><span>Sıradaki hamleler</span><em>${plan.length} adım</em></h3>` + plan.map((p, i) => `<div class="step"><b>${i + 1}</b><div><span class="verb">${esc(DO[p.do] ?? p.do)}</span>${p.gain > 0 ? `<span class="g2">+${p.gain}</span>` : ''}<div class="say">${esc(p.say ?? p.what)}</div>${p.why ? `<div class="because">${esc(plain(String(p.why).split(' · ').slice(0, 2).join(' · ')))}</div>` : ''}</div></div>`).join('') + '</div>';
+  // Suggestions, not a script: the thing, the gain, and one short line of why. Waiting and leaving are not listed.
+  const tips = plan.filter((p) => p.do !== 'çık' && p.do !== 'atla').slice(0, 6);
+  if (tips.length) h += `<div class="pl now" style="display:block"><h3><span>Öneriler</span><em>katkı, puan/sn</em></h3>` + tips.map((p) => `<div class="tip"><span class="verb">${esc(DO[p.do] ?? p.do)}</span> <span class="what2">${esc(p.do === 'bekle' || p.do === 'göster' || p.do === 'karar ver' ? p.say : p.what)}</span>${p.gain > 0 ? `<span class="g2">+${p.gain}</span>` : ''}${p.hint || (p.why && p.do !== 'bekle') ? `<div class="because">${esc(plain(p.hint || String(p.why).split(' · ')[0]))}</div>` : ''}</div>`).join('') + '</div>';
   const n = plan.length ? null : nowCard(a);
   if (n) h += `<div class="pl now">${n.art ? img(n.art, 'art') : '<span></span>'}<div><div class="verb">${esc(n.verb)}</div><div class="what">${esc(n.what)}</div><div class="because">${esc(plain(String(n.because).split(' · ').slice(0, 2).join(' · ')))}</div></div></div>`;
   if (a.offers.length) {

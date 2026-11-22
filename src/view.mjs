@@ -127,10 +127,10 @@ function actionPlan(run, a, gold, freeShop) {
     const choice = a.choices.find((c) => c.verdict === 'seç');
     if (choice) add({ do: 'seç', what: choice.name, gain: choice.value, say: `"${choice.name}" seçeneğini seç.`, why: choice.reason });
     // Purchases come from the joint plan: each is valued on the board as it will be after the ones before it.
-    for (const b of a.buys ?? []) add({ do: 'al', what: b.name, gain: b.gain,
+    for (const b of a.buys ?? []) add({ do: 'al', what: b.name, gain: b.gain, hint: [freeShop ? 'bedava' : `${b.price} altın`, b.out ? `${b.out} yerine` : b.where || null].filter(Boolean).join(' · '),
       say: `Dükkânda ${nth(b.pos)}duran "${b.name}" eşyasını al${freeShop ? ' (bedava)' : ` (${b.price} altın)`}. ${b.out ? `Tahtada yer yok: önce "${b.out}" eşyasını depoya çek. ` : ''}${b.where ? `Sonra "${b.name}" eşyasını ${b.where} yerleştir.` : 'Tahtaya yerleştir.'}`,
       why: `tahtana katkısı +${b.gain} puan/sn${b.parts ? `: ${b.parts}` : ''}` });
-    if ((a.buys ?? []).length && a.finalOrder) add({ do: 'diz', what: 'Alımlardan sonra diz', say: `Alımlar bitince tahtayı soldan sağa şu sıraya getir: ${a.finalOrder.map((n, i) => `${i + 1}. ${n}`).join(', ')}.${a.goldLeft != null ? ` Elinde ${a.goldLeft} altın kalır.` : ''}`, why: 'motor, alınan eşyalarla birlikte en yüksek tahta gücünü bu sırada buluyor' });
+    if ((a.buys ?? []).length && a.finalOrder) add({ do: 'diz', what: 'Alımlardan sonra diz', hint: a.finalOrder.join(' → '), say: `Alımlar bitince tahtayı soldan sağa şu sıraya getir: ${a.finalOrder.map((n, i) => `${i + 1}. ${n}`).join(', ')}.${a.goldLeft != null ? ` Elinde ${a.goldLeft} altın kalır.` : ''}`, why: 'motor, alınan eşyalarla birlikte en yüksek tahta gücünü bu sırada buluyor' });
     const planned = new Set((a.buys ?? []).map((b) => b.name));
     for (const o of a.offers) if (o.verdict === 'al' && !planned.has(o.name)) {
       if (freeShop) add({ do: 'al', what: o.name, say: `"${o.name}" eşyasını da al, bedava. Tahtana bir şey katmıyor: sat ya da depoda tut.`, why: o.reason });
@@ -146,12 +146,12 @@ function actionPlan(run, a, gold, freeShop) {
     if (p.verdict === 'hazırla') add({ do: 'hazırla', what: p.name, say: `${at} "${p.name}" eşyasını satmadan önce hazırlık yap: ${p.reason.split(' · ')[0]}. Sonra sat.`, why: p.reason });
     else if (p.verdict === 'sat' && p.gain > 0) add({ do: 'sat', what: p.name, gain: p.gain, say: `${at[0].toUpperCase()}${at.slice(1)} "${p.name}" eşyasını sat: satınca ${p.reason.split(' · ')[0]}.`, why: p.reason });
   }
-  for (const m of a.moves) add({ do: m.out ? 'değiştir' : 'koy', what: m.out ? `${m.in} girsin, ${m.out} çıksın` : `${m.in} tahtaya`, gain: m.gain,
+  for (const m of a.moves) add({ do: m.out ? 'değiştir' : 'koy', what: m.out ? `${m.in} girsin, ${m.out} çıksın` : `${m.in} tahtaya`, gain: m.gain, hint: m.where || 'depodan',
     say: m.out ? `Tahtadaki "${m.out}" eşyasını depoya çek, depodaki "${m.in}" eşyasını ${m.where || 'onun yerine'} yerleştir.` : `Depodaki "${m.in}" eşyasını tahtaya al ve ${m.where || 'boş yere'} yerleştir.`,
     why: `tahta gücü +${m.gain} puan/sn` });
   if (a.layout.changed && !((a.buys ?? []).length && a.finalOrder)) {
     const moved = new Set(a.layout.moved ?? []);
-    add({ do: 'diz', what: 'Tahtayı yeniden diz', gain: a.layout.gain,
+    add({ do: 'diz', what: 'Tahtayı yeniden diz', gain: a.layout.gain, hint: a.layout.order.map((o) => o.name).join(' → '),
       say: `Tahtayı soldan sağa şu sıraya getir: ${a.layout.order.map((o, i) => `${i + 1}. ${o.name}`).join(', ')}. Yeri değişenler: ${a.layout.order.filter((o) => moved.has(o.instanceId)).map((o) => o.name).join(', ') || 'yok'}.`,
       why: `tahta gücü ${a.layout.currentScore} → ${a.layout.score} puan/sn` });
   }
