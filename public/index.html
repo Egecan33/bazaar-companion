@@ -1,0 +1,342 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bazaar Companion</title>
+<style>
+  :root {
+    --night: #1b1a2e; --stall: #252340; --line: #37345a;
+    --sand: #ecdcb9; --dust: #a59fc0;
+    --saffron: #f2a93b; --teal: #58c4b0; --madder: #dd6b5f;
+    --bronze: #b9773f; --silver: #b8bfcc; --gold: #e9c349; --diamond: #7fd6ee; --legendary: #e06fb4;
+  }
+  * { box-sizing: border-box; }
+  html { background: var(--night); }
+  body {
+    margin: 0 auto; padding: 12px 14px 28px; max-width: 460px;
+    background: var(--night); color: var(--sand);
+    font: 15px/1.35 "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  }
+  .cond { font-family: "Avenir Next Condensed", "Avenir Next", system-ui, sans-serif; }
+  header { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; padding-bottom: 8px; border-bottom: 2px solid var(--saffron); }
+  header .hero { font: 600 26px/1 "Avenir Next Condensed", system-ui; letter-spacing: .01em; }
+  header .when { color: var(--dust); }
+  header .gold { margin-left: auto; color: var(--teal); font: 600 22px/1 "Avenir Next Condensed", system-ui; }
+  header .gold input { width: 3.2em; background: transparent; border: 0; border-bottom: 1px dashed var(--line); color: var(--teal); font: inherit; text-align: right; }
+  header .gold input:focus { outline: 2px solid var(--teal); outline-offset: 2px; }
+  .where { color: var(--dust); margin: 6px 0 0; font-size: 13px; }
+  h2 { font: 600 13px/1 "Avenir Next", system-ui; color: var(--dust); margin: 18px 0 6px; }
+  .row { display: grid; grid-template-columns: 62px 1fr auto; gap: 0 10px; padding: 8px 0 8px 8px; border-left: 4px solid var(--line); border-bottom: 1px solid var(--line); }
+  .row.Bronze { border-left-color: var(--bronze); } .row.Silver { border-left-color: var(--silver); }
+  .row.Gold { border-left-color: var(--gold); } .row.Diamond { border-left-color: var(--diamond); } .row.Legendary { border-left-color: var(--legendary); }
+  .verdict { font: 700 22px/1 "Avenir Next Condensed", system-ui; align-self: center; }
+  .v-al, .v-çek { color: var(--saffron); } .v-geç, .v-çekme { color: var(--madder); } .v-other { color: var(--dust); font-size: 14px; line-height: 1.05; }
+  .name { font-weight: 600; }
+  .name small { color: var(--dust); font-weight: 400; margin-left: 4px; }
+  .num { font: 600 20px/1 "Avenir Next Condensed", system-ui; align-self: center; text-align: right; }
+  .num small { display: block; font: 400 11px/1.2 "Avenir Next", system-ui; color: var(--dust); }
+  .why { grid-column: 2 / 4; color: var(--dust); font-size: 12.5px; }
+  .why span { margin-right: 10px; white-space: normal; }
+  .first { background: linear-gradient(90deg, rgba(242,169,59,.13), transparent 70%); }
+  .empty { color: var(--dust); font-size: 13px; padding: 6px 0; }
+  .totals { display: flex; gap: 14px; flex-wrap: wrap; font: 600 18px/1.1 "Avenir Next Condensed", system-ui; }
+  .totals small { display: block; font: 400 11px/1.3 "Avenir Next", system-ui; color: var(--dust); }
+  .chips { margin-top: 6px; font-size: 12.5px; color: var(--dust); }
+  .chips b { color: var(--sand); font-weight: 600; }
+  .items { font-size: 13px; margin-top: 6px; }
+  .items span { display: inline-block; margin: 0 8px 2px 0; }
+  .items .stash { color: var(--dust); }
+  footer { margin-top: 20px; font-size: 12px; color: var(--dust); }
+  footer .bad { color: var(--madder); } footer .ok { color: var(--teal); }
+  .scores { grid-column: 2 / 4; font: 600 13px/1.4 "Avenir Next Condensed", system-ui; color: var(--sand); }
+  .scores i { font-style: normal; font-weight: 400; color: var(--dust); margin: 0 10px 0 3px; }
+  .legend { font-size: 12px; color: var(--dust); }
+  .legend b { color: var(--sand); font-weight: 600; }
+  /* Panel over the game: a slim column of glass plates edged like the game's gilded frames. */
+  html.overlay, html.overlay body { background: transparent; }
+  html.overlay body { padding: 30px 8px 8px; max-width: none; --ink: #fffaf0; --dim: #c8c1d8; --gilt: rgba(255,214,140,.22); font-size: 13px; color: var(--ink); }
+  html.overlay header, html.overlay .where, html.overlay footer { display: none; }
+  .pl { background: linear-gradient(180deg, rgba(24,21,40,.80), rgba(12,11,22,.74)); border: 1px solid var(--gilt); border-radius: 12px; padding: 9px 11px; margin-bottom: 7px; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+  .pl h3 { margin: 0 0 6px; font: 600 11px/1 "Avenir Next", system-ui; color: var(--dim); display: flex; justify-content: space-between; }
+  .pl h3 em { font-style: normal; font-weight: 500; opacity: .8; }
+  .chips { display: flex; gap: 6px; margin: 0 0 7px; color: var(--ink); font-size: 13px; }
+  .chip { background: rgba(12,11,22,.74); border: 1px solid var(--gilt); border-radius: 999px; padding: 4px 10px; font: 600 14px/1 "Avenir Next Condensed", system-ui; white-space: nowrap; }
+  .chip small { font: 500 11px/1 "Avenir Next", system-ui; color: var(--dim); margin-left: 3px; }
+  .chip.gold { color: var(--saffron); margin-left: auto; } .chip.inc { color: var(--teal); }
+  .now { display: grid; grid-template-columns: auto 1fr; gap: 0 11px; align-items: center; border-color: rgba(242,169,59,.55); background: linear-gradient(135deg, rgba(74,48,12,.86), rgba(20,17,34,.82) 62%); }
+  .now .art { width: 46px; height: 46px; border-radius: 9px; object-fit: cover; box-shadow: 0 0 0 2px rgba(242,169,59,.7); }
+  .now .verb { font: 700 12px/1 "Avenir Next", system-ui; color: var(--saffron); letter-spacing: .04em; }
+  .now .what { font: 600 19px/1.15 "Avenir Next Condensed", system-ui; margin: 2px 0 1px; }
+  .now .because { color: var(--dim); font-size: 11.5px; line-height: 1.3; }
+  .row2 { display: grid; grid-template-columns: 34px 1fr auto; gap: 0 9px; align-items: center; padding: 5px 0; border-top: 1px solid rgba(255,255,255,.07); }
+  .pl h3 + .row2 { border-top: 0; padding-top: 0; }
+  .row2 .th { width: 34px; height: 34px; border-radius: 7px; object-fit: cover; box-shadow: 0 0 0 1.5px var(--line); background: #1c1a2c; }
+  .row2 .th.Bronze { box-shadow: 0 0 0 1.5px var(--bronze); } .row2 .th.Silver { box-shadow: 0 0 0 1.5px var(--silver); } .row2 .th.Gold { box-shadow: 0 0 0 1.5px var(--gold); } .row2 .th.Diamond { box-shadow: 0 0 0 1.5px var(--diamond); } .row2 .th.Legendary { box-shadow: 0 0 0 1.5px var(--legendary); }
+  .row2 .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row2 .tag { display: inline-block; font: 700 10px/1 "Avenir Next", system-ui; padding: 2px 6px; border-radius: 999px; margin-right: 6px; vertical-align: 1px; background: rgba(255,255,255,.1); color: var(--dim); }
+  .row2 .tag.go { background: var(--saffron); color: #2a1a00; } .row2 .tag.no { background: rgba(221,107,95,.25); color: #ffb3aa; }
+  .row2 .sub { color: var(--dim); font-size: 11.5px; line-height: 1.3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .row2 .val { text-align: right; font: 600 18px/1 "Avenir Next Condensed", system-ui; min-width: 44px; }
+  .row2 .val small { display: block; font: 500 10px/1.3 "Avenir Next", system-ui; color: var(--dim); }
+  .meter { grid-column: 2 / 4; height: 3px; border-radius: 2px; background: rgba(255,255,255,.08); margin-top: 4px; overflow: hidden; }
+  .meter i { display: block; height: 100%; border-radius: 2px; background: linear-gradient(90deg, var(--teal), var(--saffron)); }
+  .strip { display: flex; align-items: center; margin: 2px 0 6px; }
+  .row2 > div { min-width: 0; }
+  .row2 > .th:empty { visibility: hidden; }
+  .tile { height: 62px; min-width: 0; border-radius: 6px; background: #1c1a2c center / 100% 100% no-repeat; position: relative; box-shadow: 0 0 0 1.5px var(--line), 0 2px 6px rgba(0,0,0,.5); }
+  .tile.Bronze { box-shadow: 0 0 0 1.5px var(--bronze), 0 2px 6px rgba(0,0,0,.5); } .tile.Silver { box-shadow: 0 0 0 1.5px var(--silver), 0 2px 6px rgba(0,0,0,.5); } .tile.Gold { box-shadow: 0 0 0 1.5px var(--gold), 0 2px 6px rgba(0,0,0,.5); } .tile.Diamond { box-shadow: 0 0 0 1.5px var(--diamond), 0 2px 6px rgba(0,0,0,.5); }
+  .tile.moved { box-shadow: 0 0 0 2px var(--saffron), 0 0 10px rgba(242,169,59,.7); }
+  .tile b { position: absolute; left: 0; right: 0; bottom: 0; font: 600 9px/1.15 "Avenir Next Condensed", system-ui; background: linear-gradient(transparent, rgba(0,0,0,.85)); padding: 6px 2px 1px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; border-radius: 0 0 6px 6px; text-align: center; }
+  .join { width: 5px; height: 2px; flex: none; background: transparent; }
+  .join.on { height: 4px; border-radius: 2px; background: var(--teal); box-shadow: 0 0 6px var(--teal); }
+  .lk { font-size: 11.5px; color: var(--dim); line-height: 1.35; } .lk b { color: var(--ink); font-weight: 600; }
+  .stats { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(255,255,255,.07); font: 600 13px/1 "Avenir Next Condensed", system-ui; }
+  .stats small { font: 500 10px/1 "Avenir Next", system-ui; color: var(--dim); margin-left: 2px; }
+  .vs { display: grid; grid-template-columns: 34px 1fr 40px; gap: 3px 8px; align-items: center; font-size: 11px; color: var(--dim); margin-top: 5px; }
+  .vs .bar { height: 6px; border-radius: 3px; background: rgba(255,255,255,.08); overflow: hidden; } .vs .bar i { display: block; height: 100%; border-radius: 3px; }
+  .vs b { font: 600 13px/1 "Avenir Next Condensed", system-ui; color: var(--ink); text-align: right; }
+  .look { display: flex; gap: 6px; margin-bottom: 5px; }
+  .lo { flex: 1 1 0; min-width: 0; text-align: center; }
+  .lo .th { width: 100%; aspect-ratio: 1; height: auto; border-radius: 7px; object-fit: cover; display: block; box-shadow: 0 0 0 1.5px var(--line); }
+  .lo b { display: block; font: 600 10px/1.2 "Avenir Next Condensed", system-ui; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .lo.hit .th { box-shadow: 0 0 0 2px var(--saffron), 0 0 10px rgba(242,169,59,.8); }
+  .gauge { position: relative; height: 16px; border-radius: 8px; background: rgba(255,255,255,.08); overflow: hidden; margin: 6px 0 4px; }
+  .gauge i { display: block; height: 100%; border-radius: 8px; }
+  .gauge b { position: absolute; right: 8px; top: 0; font: 700 12px/16px "Avenir Next Condensed", system-ui; color: var(--ink); text-shadow: 0 0 3px #000; }
+  .gauge .mark { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: rgba(255,255,255,.55); }
+  .step { display: grid; grid-template-columns: 20px 1fr; gap: 0 8px; padding: 4px 0; border-top: 1px solid rgba(255,255,255,.08); }
+  .pl h3 + .step { border-top: 0; }
+  .step > b { font: 700 15px/1.2 "Avenir Next Condensed", system-ui; color: var(--saffron); text-align: right; }
+  .step .say { font: 500 13.5px/1.35 "Avenir Next", system-ui; color: var(--ink); margin: 2px 0 1px; }
+  .step .what2 { font: 600 15px/1.2 "Avenir Next Condensed", system-ui; }
+  .step .g2 { float: right; font: 600 14px/1.2 "Avenir Next Condensed", system-ui; color: var(--teal); }
+  .ok { color: var(--teal); } .warn { color: var(--saffron); }
+</style>
+</head>
+<body>
+<header>
+  <span class="hero" id="hero">Tur bekleniyor</span>
+  <span class="when" id="when"></span>
+  <span class="when" id="income"></span>
+  <span class="gold" title="Altın. Ekrandan okunamıyorsa buraya yazabilirsin."><input id="gold" inputmode="numeric" placeholder="?" aria-label="Altın"> altın</span>
+</header>
+<p class="where" id="where"></p>
+<main id="main"></main>
+<footer id="foot"></footer>
+<script>
+if (new URLSearchParams(location.search).has('overlay')) document.documentElement.classList.add('overlay');
+const $ = (id) => document.getElementById(id);
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const TIER = { Bronze: 'bronz', Silver: 'gümüş', Gold: 'altın', Diamond: 'elmas', Legendary: 'efsanevi' };
+const SIZE = { Small: 'küçük', Medium: 'orta', Large: 'büyük' };
+const PHASE = { ChoiceState: 'yol seçimi', EncounterState: 'karşılaşma', LevelUpState: 'seviye atlama', CombatState: 'savaş', PVPCombatState: 'oyuncu savaşı', ReplayState: 'tekrar' };
+const why = (r) => `<div class="why">${String(r).split(' · ').map((x) => `<span>${esc(x)}</span>`).join('')}</div>`;
+const vclass = (v) => (['al', 'çek', 'geç', 'çekme'].includes(v) ? `v-${v}` : 'v-other');
+
+function scores(o) {
+  if (o.value == null) return '';
+  const p = [[o.value, 'toplam puan'], [o.perSlot, 'yuva başına'], [o.perGold, 'altın başına'], [o.price, 'altın fiyat']].filter(([v]) => v != null);
+  return `<div class="scores">${p.map(([v, l]) => `${v}<i>${l}</i>`).join('')}</div>`;
+}
+
+function row(o, i, num, unit) {
+  return `<div class="row ${o.tier ?? ''} ${i === 0 && o.verdict === 'al' ? 'first' : ''}">
+    <div class="verdict ${vclass(o.verdict)}">${esc(o.verdict ?? '')}</div>
+    <div class="name">${esc(o.name)}<small>${[TIER[o.tier] ?? o.to ?? '', SIZE[o.size] ?? ''].filter(Boolean).join(', ')}</small></div>
+    <div class="num">${num ?? ''}<small>${unit ?? ''}</small></div>${scores(o)}${why(o.reason)}</div>`;
+}
+
+const OVERLAY = document.documentElement.classList.contains('overlay');
+const plain = (t) => String(t ?? '').replace(/\{[^}]+\}/g, '…');
+const img = (src, cls) => (src ? `<img class="${cls}" src="${encodeURI(src)}" alt="">` : `<span class="${cls}"></span>`);
+const TAG = { belirsiz: 'no', tut: '', sat: 'go', hazırla: 'go', riskli: 'no', al: 'go', seç: 'go', çek: 'go', koy: 'go', değiştir: 'go', geç: 'no', çekme: 'no' };
+const tag = (v) => (v ? `<span class="tag ${TAG[v] ?? ''}">${esc(v)}</span>` : '');
+
+function listRow({ art, tier, verdict, name, sub, value, unit, share }) {
+  return `<div class="row2">${img(art, 'th ' + (tier ?? ''))}<div><div class="nm">${tag(verdict)}${esc(name)}</div><div class="sub">${esc(plain(sub))}</div></div>
+    <div class="val">${value ?? ''}<small>${unit ?? ''}</small></div>${share != null ? `<div class="meter"><i style="width:${Math.max(4, Math.round(share * 100))}%"></i></div>` : ''}</div>`;
+}
+
+// The one thing worth doing right now, picked from everything below it.
+function nowCard(a) {
+  const pick = a.choices?.find((o) => o.verdict === 'seç');
+  if (pick) return { verb: 'Seç', what: pick.name, because: pick.reason };
+  const way = a.options?.find((o) => o.verdict === 'seç');
+  if (way) return { verb: 'Seç', what: way.name, because: way.reason };
+  const sk = a.skillOffers?.[0];
+  if (sk && (sk.gain ?? 0) > 0 && !a.offers.length) return { verb: 'Seç', what: sk.name, because: sk.reason, art: sk.art };
+  if (a.offers.length) {
+    const buy = a.offers.find((o) => o.verdict === 'al');
+    if (buy) return { verb: 'Al', what: buy.name, because: buy.reason, art: buy.art };
+    if (a.reroll?.verdict === 'çek') return { verb: 'Yenile', what: 'Dükkânı yenile', because: a.reroll.reason };
+    return { verb: 'Geç', what: 'Alınacak bir şey yok', because: a.offers[0]?.reason ?? '' };
+  }
+  const sp = a.sellPlays?.find((p) => p.verdict === 'sat' && p.gain > 0);
+  if (a.layout?.changed) return { verb: 'Diz', what: `${a.layout.moved.length} eşyanın yerini değiştir`, because: `Tahta gücü ${a.layout.currentScore} → ${a.layout.score} puan/sn (motor hesabı)` };
+  if (sp) return { verb: 'Sat', what: sp.name, because: sp.reason, art: sp.art };
+  return null;
+}
+
+function layoutPlate(L, totals, skills = [], skillGain = 0, cap = '') {
+  if (!L || !L.order.length) return '';
+  const w = { Small: 31, Medium: 62, Large: 93 };
+  const linked = new Set(L.links.flatMap((l) => [l.from + '|' + l.to, l.to + '|' + l.from]));
+  const moved = new Set(L.moved ?? []);
+  let strip = '';
+  L.order.forEach((n, i) => {
+    if (i) strip += `<span class="join ${linked.has(L.order[i - 1].name + '|' + n.name) ? 'on' : ''}"></span>`;
+    strip += `<div class="tile ${n.tier} ${moved.has(n.instanceId) ? 'moved' : ''}" style="flex:${(w[n.size] ?? 31) / 31} 1 0;max-width:${w[n.size] ?? 31}px;${n.art ? `background-image:url('${encodeURI(n.art)}')` : ''}"><b>${esc(n.name)}</b></div>`;
+  });
+  const head = !L.positional ? 'sıra fark etmiyor' : L.changed === true ? `<span class="warn">parlayanları taşı</span>` : L.changed === false ? `<span class="ok">en iyi sırada</span>` : 'önerilen sıra';
+  const seen = new Set();
+  const links = L.links.filter((l) => !seen.has(l.from + l.to) && seen.add(l.from + l.to)).slice(0, 3)
+    .map((l) => `<div class="lk"><b>${esc(l.from)}</b> ↔ <b>${esc(l.to)}</b>  ${esc(plain(l.text))}</div>`).join('');
+  const t = totals, st = [[t.firstUse, 'sn ilk vuruş', true], [t.value, 'toplam'], [t.damage, 'hasar'], [t.shield, 'kalkan'], [t.heal, 'iyileşme'], [t.denied, 'engelleme']].filter(([v]) => v > 0)
+    .map(([v, l, plain]) => `<span>${v}<small>${plain ? ' ' + l : l + '/sn'}</small></span>`).join('');
+  return `<div class="pl"><h3><span>Tahtan${cap ? ` (${cap})` : ''}</span><em>${head}</em></h3><div class="strip">${strip}</div>${links}${st ? `<div class="stats">${st}</div>` : ''}${skills.length ? `<div class="lk" style="margin-top:5px"><b>Yeteneklerin</b> (${skills.length}): ${esc(skills.join(', '))} · tahtana katkısı ${skillGain > 0 ? '+' : ''}${skillGain} puan/sn</div>` : ''}</div>`;
+}
+
+function renderOverlay(s) {
+  const r = s.run, a = s.advice, m = s.money;
+  if (!r.active) { patch($('main'), `<div class="chips"><span class="chip">Tur bekleniyor</span></div>`); return; }
+  let h = `<div class="chips"><span class="chip">${r.day}. gün<small>${r.hour}. saat</small></span>${r.encounter ? `<span class="chip" style="overflow:hidden;text-overflow:ellipsis">${esc(r.encounter.name)}</span>` : ''}
+    <span class="chip gold">${m.gold ?? '?'}<small>altın</small></span>${m.income != null ? `<span class="chip inc">+${m.income}<small>/gün</small></span>` : ''}</div>`;
+  const pw = s.power;
+  if (pw) h += `<div class="pl" style="padding:7px 11px"><h3 style="margin-bottom:5px"><span>Güne göre güç</span><em>${pw.level}. seviye ortanca canavar = %100</em></h3><div class="gauge"><i style="width:${Math.min(100, pw.percent / 2)}%;background:${pw.percent >= 110 ? 'var(--teal)' : pw.percent >= 80 ? 'var(--saffron)' : 'var(--madder)'}"></i><span class="mark"></span><b>%${pw.percent}</b></div></div>`;
+  const DO = { al: 'Al', git: 'Git', 'seç': 'Seç', sat: 'Sat', koy: 'Koy', 'değiştir': 'Değiştir', diz: 'Diz', yenile: 'Yenile', 'çık': 'Çık', bekle: 'Bekle', atla: 'Atla', 'hazırla': 'Hazırla', 'karar ver': 'Karar ver', 'göster': 'Göster' };
+  const plan = s.plan ?? [];
+  if (plan.length) h += `<div class="pl now" style="display:block"><h3><span>Sıradaki hamleler</span><em>${plan.length} adım</em></h3>` + plan.map((p, i) => `<div class="step"><b>${i + 1}</b><div><span class="verb">${esc(DO[p.do] ?? p.do)}</span>${p.gain > 0 ? `<span class="g2">+${p.gain}</span>` : ''}<div class="say">${esc(p.say ?? p.what)}</div>${p.why ? `<div class="because">${esc(plain(String(p.why).split(' · ').slice(0, 2).join(' · ')))}</div>` : ''}</div></div>`).join('') + '</div>';
+  const n = plan.length ? null : nowCard(a);
+  if (n) h += `<div class="pl now">${n.art ? img(n.art, 'art') : '<span></span>'}<div><div class="verb">${esc(n.verb)}</div><div class="what">${esc(n.what)}</div><div class="because">${esc(plain(String(n.because).split(' · ').slice(0, 2).join(' · ')))}</div></div></div>`;
+  if (a.offers.length) {
+    const top = Math.max(...a.offers.map((o) => o.value ?? 0), 0.1);
+    h += `<div class="pl"><h3><span>Dükkân</span><em>tahtana katkı, puan/sn</em></h3>` + a.offers.map((o) => listRow({ art: o.art, tier: o.tier, verdict: o.verdict, name: o.name, sub: o.reason, value: o.value > 0 ? '+' + o.value : o.value, unit: o.price != null ? `${o.price} altın` : '', share: Math.max(0, o.value ?? 0) / top })).join('');
+    if (a.reroll && a.reroll.possible !== false) h += listRow({ verdict: a.reroll.verdict, name: 'Yenile', sub: a.reroll.reason, value: a.reroll.gain > 0 ? '+' + a.reroll.gain : a.reroll.gain, unit: 'beklenen fark' });
+    h += '</div>';
+  }
+  if (a.options?.length) {
+    const top = Math.max(...a.options.map((o) => o.score ?? 0), 0.1);
+    h += `<div class="pl"><h3><span>${r.phase === 'LevelUpState' ? 'Seviye ödülü' : 'Önündeki yollar'}</span><em>soldan sağa, kaba sıralama</em></h3>` + a.options.map((o) => listRow({ verdict: o.verdict, name: o.name, sub: o.reason, value: o.score, unit: o.kind, share: o.score != null ? Math.max(0, o.score) / top : null })).join('') + '</div>';
+  }
+  if (a.skillOffers?.length) {
+    const top = Math.max(...a.skillOffers.map((o) => o.gain ?? 0), 0.1);
+    h += `<div class="pl"><h3><span>${r.phase === 'LevelUpState' ? 'Seviye ödülü: yetenekler' : 'Yetenekler'}</span><em>tahtana katkı, puan/sn</em></h3>` + a.skillOffers.map((o, i) => listRow({ art: o.art, verdict: i === 0 && (o.gain ?? 0) > 0 ? 'seç' : '', name: o.name, sub: o.reason, value: o.gain != null ? (o.gain > 0 ? '+' + o.gain : o.gain) : '', share: Math.max(0, o.gain ?? 0) / top })).join('') + '</div>';
+  }
+  if (a.choices?.length) {
+    const top = Math.max(...a.choices.map((o) => o.value ?? 0), 0.1);
+    h += `<div class="pl"><h3><span>Seçenekler</span><em>buildine göre puan</em></h3>` + a.choices.map((o) => listRow({ verdict: o.verdict, name: o.name, sub: o.reason, value: o.value, share: o.value != null ? Math.max(0, o.value) / top : null })).join('') + '</div>';
+  }
+  for (const mo of a.monsters ?? []) {
+    const top = Math.max(mo.theirs, mo.mine, 0.1);
+    h += `<div class="pl"><h3><span>${esc(mo.name)}, seviye ${mo.level ?? '?'}</span><em>${mo.health} can, ödül ${mo.gold} altın ${mo.xp} XP</em></h3>
+      <div class="vs" ${mo.uncertain ? 'style="opacity:.45"' : ''}><span>rakip</span><span class="bar"><i style="width:${Math.round(mo.theirs / top * 100)}%;background:var(--madder)"></i></span><b>${mo.theirs}</b>
+      <span>sen</span><span class="bar"><i style="width:${Math.round(mo.mine / top * 100)}%;background:var(--teal)"></i></span><b>${mo.mine}</b></div>
+      ${mo.uncertain ? `<div class="lk warn">${esc(mo.note)}. Kazanma tahmini verilmiyor.</div>` : mo.fight ? `<div class="gauge"><i style="width:${mo.fight.chance}%;background:${mo.fight.chance >= 60 ? 'var(--teal)' : mo.fight.chance >= 45 ? 'var(--saffron)' : 'var(--madder)'}"></i><b>%${mo.fight.chance}</b></div>
+      <div class="lk">Kazanma tahmini · güven ${mo.fight.confidence} (iki tahtanın %${mo.fight.coverage}'i modellendi) · ortalama ${mo.fight.seconds} sn${mo.fight.ignored.length ? ` · hesaba girmeyen: ${esc(mo.fight.ignored.join(', '))}` : ''}</div>` : `<div class="lk">Kazanma tahmini için canın okunamadı.</div>`}
+      <div class="lk" style="margin-top:6px">${esc(mo.items.slice(0, 7).join(', '))}</div></div>`;
+  }
+  h += layoutPlate(a.layout, { value: a.engine?.value, firstUse: a.engine?.firstUse, ...(a.engine?.parts ?? {}) }, s.skills ?? [], s.skillGain, `${s.board.slots}/${s.board.capacity ?? 10} yuva${s.board.level ? ', seviye ' + s.board.level : ''}`);
+  if (a.engine && a.engine.coverage < 100) h += `<div class="chips"><span class="chip" style="white-space:normal;font:500 11px/1.3 'Avenir Next',system-ui;border-radius:10px">Tahtandaki etkilerin %${a.engine.coverage}'i hesaba girdi. Girmeyen: ${esc(a.engine.unhandled.join(', '))}</span></div>`;
+  if (a.moves?.length) h += `<div class="pl"><h3><span>Depo ↔ tahta</span><em>kazanç, puan</em></h3>` + a.moves.map((mv) => listRow({ art: mv.inArt, verdict: mv.out ? 'değiştir' : 'koy', name: mv.out ? `${mv.in} girsin, ${mv.out} çıksın` : `${mv.in} tahtaya`, sub: mv.reason, value: mv.gain > 0 ? '+' + mv.gain : mv.gain })).join('') + '</div>';
+  if (a.stash?.length) h += `<div class="pl"><h3><span>Depo: tut ya da sat</span><em>satış, altın</em></h3>` + a.stash.map((d) => listRow({ art: d.art, tier: d.tier, verdict: d.verdict, name: d.name, sub: d.reason, value: d.verdict === 'sat' && d.price != null ? '+' + d.price : '' })).join('') + '</div>';
+  if (a.sellPlays?.length) h += `<div class="pl"><h3><span>Satınca etkili</span><em>kazanç, puan</em></h3>` + a.sellPlays.map((p) => listRow({ art: p.art, tier: p.tier, verdict: p.verdict, name: p.name + (p.where === 'stash' ? ' (depo)' : ''), sub: p.reason, value: p.gain > 0 ? '+' + p.gain : '' })).join('') + '</div>';
+  if (a.lookout?.length) h += `<div class="pl"><h3><span>Kolla</span><em>bu tahtaya en çok uyanlar</em></h3><div class="look">` + a.lookout.map((l) => `<div class="lo ${l.onOffer ? 'hit' : ''}" title="">${img(l.art, 'th ' + (l.tier ?? ''))}<b>${esc(l.name)}</b></div>`).join('') + `</div><div class="lk">${esc(plain(String(a.lookout[0].reason).split(' · ').filter((x) => /sinerji|istiyor/.test(x)).join(' · ')))}</div></div>`;
+  if (a.opinions?.length) h += `<div class="pl"><h3><span>Görüş</span><em>YouTube, hesap değil</em></h3>` + a.opinions.map((o) => `<div class="lk" style="margin-bottom:4px">${esc(o.text)} <i style="opacity:.7">(${esc(o.source)})</i></div>`).join('') + '</div>';
+  const S = s.status.screen.state;
+  if (!/^çalışıyor/.test(S) && !/önde değil/.test(S)) h += `<div class="chips"><span class="chip">Ekran: ${esc(S)}</span></div>`;
+  patch($('main'), h);
+}
+
+// Update only the plates whose content changed, in place, so the panel does not flicker or jump on every frame.
+function patch(main, html) {
+  const tmp = document.createElement('div');
+  tmp.innerHTML = html;
+  const old = new Map([...main.children].map((c) => [c.dataset.k, c]));
+  const seen = new Map();
+  let prev = null;
+  for (const el of [...tmp.children]) {
+    const base = el.querySelector('h3 span')?.textContent ?? el.className;
+    const n = seen.get(base) ?? 0; seen.set(base, n + 1);
+    const k = base + '#' + n;
+    let cur = old.get(k);
+    if (cur) { old.delete(k); if (cur.innerHTML !== el.innerHTML) cur.innerHTML = el.innerHTML; if (cur.className !== el.className) cur.className = el.className; if (cur.getAttribute('style') !== el.getAttribute('style')) cur.setAttribute('style', el.getAttribute('style') ?? ''); }
+    else { cur = el; cur.dataset.k = k; }
+    const want = prev ? prev.nextSibling : main.firstChild;
+    if (want !== cur) main.insertBefore(cur, want);
+    prev = cur;
+  }
+  for (const o of old.values()) o.remove();
+  fit(main);
+}
+
+// The panel cannot be scrolled (clicks and the wheel pass through to the game), so everything has to fit the
+// window: the least urgent plates are dropped first, then the whole panel is scaled down a little.
+const DROP_FIRST = ['Görüş', 'Kolla', 'Depo: tut ya da sat', 'Güne göre güç', 'Satınca etkili'];
+function fit(main) {
+  if (!OVERLAY) return;
+  document.body.style.zoom = 1;
+  for (const c of main.children) c.hidden = false;
+  const room = () => window.innerHeight - 6;
+  const tall = () => document.body.scrollHeight * (parseFloat(document.body.style.zoom) || 1);
+  for (const name of DROP_FIRST) {
+    if (tall() <= room()) return;
+    for (const c of main.children) if ((c.dataset.k ?? '').startsWith(name)) c.hidden = true;
+  }
+  if (tall() > room()) document.body.style.zoom = Math.max(0.7, room() / document.body.scrollHeight).toFixed(3);
+}
+window.addEventListener('resize', () => fit($('main')));
+
+function render(s) {
+  if (OVERLAY) return renderOverlay(s);
+  const r = s.run, a = s.advice;
+  $('hero').textContent = r.active ? (r.hero ?? 'Kahraman bilinmiyor') : 'Tur bekleniyor';
+  $('when').textContent = r.active ? `${r.day}. gün, ${r.hour}. saat` : '';
+  $('income').textContent = s.money.income != null ? `gelir +${s.money.income}/gün` : '';
+  if (document.activeElement !== $('gold')) $('gold').value = s.money.gold ?? '';
+  const enc = r.encounter;
+  $('where').textContent = r.active
+    ? [PHASE[r.phase] ?? r.phase, enc?.name, enc?.shop?.rerollCost != null && enc.shop.rerollsAllowed ? `yeniden çekme ${enc.shop.rerollCost} altın` : null,
+       s.money.fromSales || s.money.spentEst ? `satış +${s.money.fromSales}, harcama ≈${s.money.spentEst}` : null].filter(Boolean).join(' — ')
+    : 'Oyunu aç ve bir tur başlat; burası kendiliğinden dolacak.';
+  let h = '';
+  h += '<h2>Önündeki eşyalar</h2>';
+  h += a.offers.length ? a.offers.map((o, i) => row(o, i, o.perSlot, 'puan/yuva')).join('')
+    : `<div class="empty">${s.status.screen.state === 'çalışıyor' ? 'Ekranda tanınan teklif yok.' : 'Teklifler ekrandan okunur: ' + esc(s.status.screen.state)}</div>`;
+  if (a.reroll) {
+    h += '<h2>Yeniden çekme</h2>';
+    h += a.reroll.possible === false ? `<div class="empty">${esc(a.reroll.reason)}</div>`
+      : row({ verdict: a.reroll.verdict, name: 'Dükkânı yenile', reason: a.reroll.reason }, 1, a.reroll.gain > 0 ? '+' + a.reroll.gain : a.reroll.gain, 'beklenen fark');
+  }
+  if (a.skillOffers.length) h += '<h2>Önündeki yetenekler</h2>' + a.skillOffers.map((o, i) => row({ ...o, verdict: i === 0 && o.touches ? 'al' : '' }, 1, o.touches, 'eşyana dokunur')).join('');
+  if (a.enchant) h += `<h2>Büyü: ${esc(a.enchant.enchant)}</h2>` + (a.enchant.targets.map((o, i) => row({ ...o, verdict: i === 0 ? 'buna' : '' }, 1, o.gain > 0 ? '+' + o.gain : '', 'puan/sn')).join('') || '<div class="empty">Uygun eşya yok.</div>');
+  h += '<h2>Satılabilecekler, en zayıftan</h2>';
+  h += a.sell.length ? a.sell.map((o) => row({ ...o, verdict: '' }, 1, o.sellPrice != null ? '+' + o.sellPrice : '', 'altın')).join('') : '<div class="empty">Henüz eşya yok.</div>';
+  if (a.upgrades.length) h += '<h2>Yükseltme en çok neye yarar</h2>' + a.upgrades.map((o) => row({ ...o, verdict: '', tier: o.from }, 1, o.gain > 0 ? '+' + o.gain : '0', 'puan/sn')).join('');
+  const t = s.board.totals;
+  h += `<h2>Tahta, ${s.board.slots}/10 yuva dolu</h2><div class="totals">
+    <div>${t.damage}<small>hasar/sn</small></div><div>${t.burn}<small>yanık/sn</small></div><div>${t.poison}<small>zehir/sn</small></div>
+    <div>${t.shield}<small>kalkan/sn</small></div><div>${t.heal}<small>iyileşme/sn</small></div></div>`;
+  if (s.board.tags.length) h += `<div class="chips">${s.board.tags.map(([k, n]) => `<b>${n}</b> ${esc(k)}`).join(', ')}</div>`;
+  h += `<div class="items">${s.board.items.map((i) => `<span class="${i.where}">${esc(i.name)} <small>${TIER[i.tier] ?? ''}${i.where === 'stash' ? ', depo' : ''}</small></span>`).join('')}</div>`;
+  if (s.skills.length) h += `<div class="chips">Yetenekler: ${s.skills.map(esc).join(', ')}</div>`;
+  const m = s.model;
+  if (m) h += `<h2>Puanlama</h2><div class="legend">Puan = ${m.horizon} sn'lik savaşta saniye başına etki. <b>hasar ×${m.weights.damage}</b>, <b>kalkan ×${m.weights.shield}</b>, <b>iyileşme ×${m.weights.heal}</b>; yanık ve zehir süreye göre toplanır; hız, şarj, yavaşlatma, dondurma ortalama eşyanın saniyesi kadar; tahtayla her bağ <b>+%${Math.round(m.synergy * 100)}</b>. Sıralama yuva başına puana göre. Ağırlıklar varsayım, eşya sayıları oyun verisinden.</div>`;
+  $('main').innerHTML = h;
+  const L = s.status.log, S = s.status.screen;
+  const age = (ms) => (ms == null ? 'hiç' : Math.max(0, Math.round((s.t - ms) / 1000)) + ' sn önce');
+  $('foot').innerHTML = `Log: <span class="${L.exists && L.size ? 'ok' : 'bad'}">${L.exists ? (L.size ? `${L.events} olay, son değişiklik ${age(L.lastChange)}` : 'dosya boş, oyun henüz yazmadı') : 'dosya yok'}</span><br>
+    Ekran: <span class="${S.state === 'çalışıyor' ? 'ok' : 'bad'}">${esc(S.state)}</span>${S.ms ? `, kare ${S.ms} ms` : ''}<br>
+    Veri: oyun sürümü ${esc((s.status.data.gameVersion ?? '').split('-')[0])}`;
+}
+
+const es = new EventSource('/events');
+es.onmessage = (e) => render(JSON.parse(e.data));
+es.onerror = () => { $('foot').innerHTML = '<span class="bad">Sunucuya bağlanılamıyor. Başlatıcıyı yeniden çalıştır.</span>'; };
+$('gold').addEventListener('change', (e) => {
+  const v = e.target.value.trim();
+  fetch('/api/gold', { method: 'POST', body: JSON.stringify({ gold: v === '' ? null : Number(v) }) });
+});
+</script>
+</body>
+</html>

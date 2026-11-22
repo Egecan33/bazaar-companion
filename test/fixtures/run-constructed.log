@@ -1,0 +1,31 @@
+Mono path[0] = '/Applications/TheBazaar.app/Contents/Resources/Data/Managed'
+Initialize engine version: 6000.3.27f2 (22188f149405)
+[2026-11-22T18:00:00.000Z] [Info] Starting new run...
+[2026-11-22T18:00:01.000Z] [Info] Received: type=NetMessageRunInitialized, id=1
+[2026-11-22T18:00:02.000Z] [Info] Received run initialization data from server. Loading board...
+[2026-11-22T18:00:03.000Z] [Info] State changed from [StartRunAppState] to [ChoiceState]
+[2026-11-22T18:00:04.000Z] [Info] Card Purchased: InstanceId: enc_aaa1 - TemplateIdb10b084f-4704-4d0c-ae62-299c1c58d52c - Target:None - SectionNone
+[2026-11-22T18:00:05.000Z] [Info] State changed from [ChoiceState] to [EncounterState]
+[2026-11-22T18:00:06.000Z] [Info] Card Purchased: InstanceId: itm_n4rwh4l - TemplateId00e3a7ff-af5e-47ce-a2c0-2d4ec31ac7d7 - Target:PlayerSocket_0 - SectionHand
+[2026-11-22T18:00:07.000Z] [Info] Received: type=NetMessageGameSim, id=7
+[2026-11-22T18:00:08.000Z] [Info] State changed from [EncounterState] to [ChoiceState]
+[2026-11-22T18:00:09.000Z] [Info] Card Purchased: InstanceId: enc_aaa2 - TemplateId065f6793-8607-4f02-abfe-db6afb221ab2 - Target:None - SectionNone
+[2026-11-22T18:00:10.000Z] [Info] State changed from [ChoiceState] to [EncounterState]
+[2026-11-22T18:00:11.000Z] [Info] Card Purchased: InstanceId: itm_gr4pe - TemplateIde6a183ce-0ea9-4981-bbfb-95be32b93de2 - Target:PlayerSocket_1 - SectionHand
+[2026-11-22T18:00:12.000Z] [Info] Card Purchased: InstanceId: itm_4nch0r - TemplateId20d85338-b625-4b9a-95a7-8a60805e061f - Target:PlayerStorageSocket_0 - SectionStorage
+[2026-11-22T18:00:13.000Z] [Info] Sold Card itm_gr4pe for 1 gold.
+[2026-11-22T18:00:14.000Z] [Warning] [SFXPlayer] Event not found for GUID: 00000000.
+[2026-11-22T18:00:15.000Z] [Info] State changed from [EncounterState] to [ChoiceState]
+[2026-11-22T18:00:16.000Z] [Info] Card Purchased: InstanceId: enc_aaa3 - TemplateId068d7ed2-3716-4bab-9240-9d7ff63c6fa3 - Target:None - SectionNone
+[2026-11-22T18:00:17.000Z] [Info] State changed from [ChoiceState] to [CombatState]
+[2026-11-22T18:00:18.000Z] [Info] Combat prepared: frames=412, effectsMs=3
+[2026-11-22T18:00:19.000Z] [Info] Combat simulation completed: durationMs=6870
+[2026-11-22T18:00:20.000Z] [Info] State changed from [CombatState] to [ReplayState]
+[2026-11-22T18:00:21.000Z] [Info] State changed from [ReplayState] to [LevelUpState]
+[2026-11-22T18:00:22.000Z] [Info] Selected skill 00f1ae18-33a6-499d-b2ea-319ac3debab9 to socket 0
+[2026-11-22T18:00:23.000Z] [Info] Upgraded Card itm_n4rwh4l Tier from: Bronze to: Silver
+[2026-11-22T18:00:24.000Z] [Info] State changed from [LevelUpState] to [ChoiceState]
+[2026-11-22T18:00:25.000Z] [Info] State changed from [ChoiceState] to [PVPCombatState]
+[2026-11-22T18:00:26.000Z] [Info] Combat simulation completed: durationMs=14210
+[2026-11-22T18:00:27.000Z] [Info] State changed from [PVPCombatState] to [ReplayState]
+[2026-11-22T18:00:28.000Z] [Info] State changed from [ReplayState] to [ChoiceState]

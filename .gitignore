@@ -1,0 +1,7 @@
+node_modules/
+data/
+vision/.venv/
+__pycache__/
+*.pyc
+.DS_Store
+overlay/bazaar-overlay
