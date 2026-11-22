@@ -372,3 +372,20 @@ test('plan: one ordered list of steps per screen, buying within the gold in hand
   assert.equal(poor.filter((s) => s.do === 'al').length, 0, 'nothing is bought without gold');
   assert.deepEqual(buildView({ ...base, phase: 'CombatState' }, null, data, { now }).plan.map((s) => s.do), ['bekle']);
 });
+
+test('free offers are never skipped; a single free pick goes to the best one', () => {
+  const item = (n) => Object.values(data.cards).find((c) => c.name === n && c.type === 'Item');
+  const items = Object.fromEntries(['Piranha', 'Marlon'].map((n, i) => ['w' + i, { templateId: item(n).id, tier: 'Bronze', where: 'board' }]));
+  const free = Object.values(data.cards).find((c) => c.type === 'EventEncounter' && c.shop?.free && c.shop.multiple);
+  const one = Object.values(data.cards).find((c) => c.type === 'EventEncounter' && c.shop?.free && c.shop.multiple === false);
+  const filler = Object.values(data.cards).find((c) => c.type === 'Item' && c.size === 'Small' && !(c.fx ?? []).length && c.tiers[c.startingTier]);
+  const now = Date.now();
+  const frame = { ts: now / 1000, detections: [{ kind: 'items', art: 'a', cardIds: [item('Narwhal').id], cx: 0.4, cy: 0.4 }, { kind: 'items', art: 'b', cardIds: [filler.id], cx: 0.6, cy: 0.4 }] };
+  const run = (enc) => ({ active: true, hero: 'Vanessa', day: 4, hour: 1, phase: 'EncounterState', items, skills: [], encounters: [], current: { templateId: enc.id }, fights: { pve: 0, pvp: 0 }, goldFromSales: 0, goldSpentEst: 0 });
+  const many = buildView(run(free), frame, data, { now, gold: 0 });
+  assert.ok(many.advice.offers.every((o) => o.verdict === 'al'), 'everything free is taken, even with no gold');
+  assert.ok(many.plan.filter((s) => s.do === 'al').length === 2 && !many.plan.some((s) => s.do === 'atla'));
+  const single = buildView(run(one), frame, data, { now, gold: 0 });
+  assert.deepEqual(single.advice.offers.map((o) => o.verdict).sort(), ['al', 'geç']);
+  assert.equal(single.advice.offers.find((o) => o.verdict === 'al').name, 'Narwhal');
+});

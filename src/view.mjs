@@ -132,8 +132,11 @@ function actionPlan(run, a, gold, freeShop) {
       why: `tahtana katkısı +${b.gain} puan/sn${b.parts ? `: ${b.parts}` : ''}` });
     if ((a.buys ?? []).length && a.finalOrder) add({ do: 'diz', what: 'Alımlardan sonra diz', say: `Alımlar bitince tahtayı soldan sağa şu sıraya getir: ${a.finalOrder.map((n, i) => `${i + 1}. ${n}`).join(', ')}.${a.goldLeft != null ? ` Elinde ${a.goldLeft} altın kalır.` : ''}`, why: 'motor, alınan eşyalarla birlikte en yüksek tahta gücünü bu sırada buluyor' });
     const planned = new Set((a.buys ?? []).map((b) => b.name));
-    for (const o of a.offers) if (o.verdict === 'al' && !planned.has(o.name)) add({ do: 'atla', what: o.name, say: `"${o.name}" eşyasını alma: öncekileri aldıktan sonra altın yetmiyor ya da katkısı kalmıyor.`, why: o.reason });
-    for (const o of a.offers) if (o.verdict === 'geç' && a.offers.length <= 4) add({ do: 'atla', what: o.name, say: `"${o.name}" eşyasını alma: bu tahtaya bir şey katmıyor.`, why: o.reason });
+    for (const o of a.offers) if (o.verdict === 'al' && !planned.has(o.name)) {
+      if (freeShop) add({ do: 'al', what: o.name, say: `"${o.name}" eşyasını da al, bedava. Tahtana bir şey katmıyor: sat ya da depoda tut.`, why: o.reason });
+      else add({ do: 'atla', what: o.name, say: `"${o.name}" eşyasını alma: öncekileri aldıktan sonra altın yetmiyor ya da katkısı kalmıyor.`, why: o.reason });
+    }
+    for (const o of a.offers) if (o.verdict === 'geç' && a.offers.length <= 4) add({ do: 'atla', what: o.name, say: freeShop ? `"${o.name}" eşyasını seçme: tek seçim hakkın var ve diğeri daha iyi.` : `"${o.name}" eşyasını alma: bu tahtaya bir şey katmıyor.`, why: o.reason });
     if (a.reroll?.verdict === 'çek' && !(a.buys ?? []).length) add({ do: 'yenile', what: 'Dükkânı yenile', say: 'Dükkânı yenile: bu tekliflerden daha iyisinin gelmesi bekleniyor.', why: a.reroll.reason });
     const sk = a.skillOffers[0];
     if (phase === 'EncounterState' && sk && (sk.gain ?? 0) > 0) add({ do: 'seç', what: sk.name, gain: sk.gain, say: `"${sk.name}" yeteneğini al.`, why: sk.reason });
@@ -255,7 +258,9 @@ export function buildView(run, screen, data, opts = {}) {
   const level = opts.level ?? Math.max(1, run.day ?? 1);
   const capacity = Math.max(usedSlots, Math.min(10, 4 + 2 * (level - 1)));
   const freeShopEarly = (shop?.free ?? false) || run.phase === 'LevelUpState';
-  const eng = engineAdvice(boardNow, stashNow, skillsNow, itemOffers, run, data, skillOfferIds, { capacity, gold, free: freeShopEarly });
+  // Some free encounters let you take only one of what is shown.
+  const onePick = freeShopEarly && (shop?.multiple === false || run.phase === 'LevelUpState'); // a level-up reward is one pick
+  const eng = engineAdvice(boardNow, stashNow, skillsNow, itemOffers, run, data, skillOfferIds, { capacity, gold, free: freeShopEarly, maxBuys: onePick ? 1 : 4 });
   const fightOf = (card) => engineFight(card, boardNow, skillsNow, opts.health ?? null, data);
   const freeShop = (shop?.free ?? false) || run.phase === 'LevelUpState';
   const shelf = itemOffers.slice().sort((x, y) => x.cx - y.cx).map((x) => x.templateId);
@@ -268,6 +273,17 @@ export function buildView(run, screen, data, opts = {}) {
     o.value = e.gain; o.perSlot = Math.round((e.gain / slots) * 10) / 10;
     o.verdict = !canPay ? 'para yetmiyor' : e.gain > 0.3 ? 'al' : 'geç';
     o.reason = [`tahtana katkısı ${e.gain > 0 ? '+' : ''}${e.gain} puan/sn${e.parts ? ` (${e.parts})` : ''}`, e.out ? `yer yok: ${e.out} çıkar, ${e.where} koy` : e.where ? `${e.where} koy` : null, o.price != null && !freeShop ? `${o.price} altın` : null].filter(Boolean).join(' · ');
+  }
+  // Free things are never "skip": taking costs nothing, and what does not help the board can be sold or held.
+  if (freeShop && offers.length) {
+    const sellOf = (o) => data.gameMode.sellPrices?.[o.size]?.[o.tier] ?? 0;
+    if (onePick) {
+      const best = offers.slice().sort((x, y) => (y.value ?? 0) - (x.value ?? 0) || sellOf(y) - sellOf(x))[0];
+      for (const o of offers) {
+        if (o === best) { o.verdict = 'al'; if (!((o.value ?? 0) > 0.3)) o.reason = `bedava, tek seçim hakkı: tahtana katmıyor ama en değerlisi bu (satınca ${sellOf(o)} altın) · ${o.reason}`; }
+        else { o.verdict = 'geç'; o.reason = `tek seçim hakkı var, "${best.name}" daha iyi · ${o.reason}`; }
+      }
+    } else for (const o of offers) if (o.verdict !== 'al') { o.verdict = 'al'; o.freeExtra = true; o.reason = `bedava: tahtana katmıyor, yine de al; sat (+${sellOf(o)} altın) ya da depoda tut · ${o.reason}`; }
   }
   for (const o of offers) {
     o.art = art(o.templateId);

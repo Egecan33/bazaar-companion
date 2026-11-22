@@ -95,10 +95,10 @@ function addValue(board, skills, cand, data, refDps, capacity = 10) {
  * Buy in the order that helps most, re-valuing what is left after each purchase (an item's worth changes once
  * another has joined the board). Stops when gold runs out or nothing adds value. free: the shop charges nothing.
  */
-function buyPlan(board, skills, offers, gold, free, data, refDps, capacity) {
+function buyPlan(board, skills, offers, gold, free, data, refDps, capacity, maxBuys = 4) {
   let cur = board.slice(); let left = gold; const rest = offers.slice(); const plan = [];
   const priceOf = (o) => (free ? 0 : data.gameMode.buyPrices?.[data.cards[o.templateId]?.size]?.[o.tier] ?? 0);
-  for (let step = 0; step < 4 && rest.length; step++) {
+  for (let step = 0; step < maxBuys && rest.length; step++) {
     let best = null;
     for (const o of rest) {
       const price = priceOf(o);
@@ -134,7 +134,7 @@ export function engineAdvice(board, stash, skills, offers, run, data, skillOffer
     order: ord.order.map((o) => o.instanceId), orderGain: round(ord.value - ord.startValue), orderChanged: ord.order.some((o, i) => o.instanceId !== board[i]?.instanceId),
     offers: offers.map((of) => ({ templateId: of.templateId, ...addValue(board, skills, { templateId: of.templateId, tier: of.tier, instanceId: 'offer' }, data, refDps, capacity) })),
     stash: stash.map((s) => ({ instanceId: s.instanceId, templateId: s.templateId, ...addValue(board, skills, s, data, refDps, capacity) })),
-    buys: buyPlan(board, skills, offers, opts.gold ?? null, opts.free ?? false, data, refDps, capacity),
+    buys: buyPlan(board, skills, offers, opts.gold ?? null, opts.free ?? false, data, refDps, capacity, opts.maxBuys ?? 4),
     capacity,
   };
   // What the owned skills add, and what each offered skill would add, on this exact board.
