@@ -278,6 +278,14 @@ createServer((req, res) => {
       try {
         screen = { ...JSON.parse(body), ts: Date.now() / 1000 };
         status.screen.state = 'çalışıyor';
+        // A hand-fed frame is taken at its word: it goes into the scene memory and sets the board row and counters.
+        scene.onFrame(screen, tracker.run.phase);
+        const row = (screen.detections ?? []).filter((d) => d.kind === 'items' && d.cy >= 0.55 && d.cy < 0.76).sort((x, y) => x.cx - y.cx);
+        if (row.length) screenBoard = row.map((d) => ({ cardIds: d.cardIds, cx: d.cx }));
+        if (screen.gold != null) lastGold = screen.gold;
+        if (screen.income != null) lastIncome = screen.income;
+        if (screen.health != null) lastHealth = screen.health;
+        if (screen.level != null) lastLevel = screen.level;
         dirty = true;
         res.writeHead(204).end();
       } catch {

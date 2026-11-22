@@ -4,13 +4,16 @@
   "private": true,
   "type": "module",
   "description": "Local live companion for The Bazaar: follows the run from Player.log and the screen, ranks the choices.",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
-    "setup": "node --no-warnings scripts/import-data.mjs",
+    "setup": "node --no-warnings scripts/import-data.mjs && npm run --silent setup:vision",
     "setup:vision": "cd vision && uv venv -q --python 3.11 .venv && uv pip install -q --python .venv/bin/python -r requirements.txt && .venv/bin/python extract_art.py && .venv/bin/python matcher.py --rebuild",
     "start": "node --no-warnings scripts/sync.mjs && node --no-warnings src/server.mjs",
     "start:log-only": "node --no-warnings src/server.mjs --no-screen",
     "test": "node --no-warnings --test test/*.test.mjs",
     "test:vision": "vision/.venv/bin/python vision/test_matcher.py"
-  }
+  },
+  "license": "MIT"
 }
